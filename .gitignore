@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Data files (large / generated)
+data/input_cases/*.pptx
+data/input_cases/*.csv
+data/output_reports/*.html
+data/output_reports/images/
+data/output_reports/.processed_manifest.json
+
+# Logs
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
