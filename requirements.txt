@@ -1,6 +1,20 @@
-python-pptx>=0.6.23
-pandas>=2.0.0
+# Web 框架
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# 数据模型
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# LLM 客户端
 openai>=1.0.0
+
+# PPT 解析
+python-pptx>=0.6.23
+
+# 模板引擎
 jinja2>=3.1.0
+
+# 配置管理
 python-dotenv>=1.0.0
-Pillow>=10.0.0

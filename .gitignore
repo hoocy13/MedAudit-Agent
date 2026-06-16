@@ -15,11 +15,10 @@ build/
 .env
 
 # Data files (large / generated)
+data/uploads/
 data/input_cases/*.pptx
 data/input_cases/*.csv
-data/output_reports/*.html
-data/output_reports/images/
-data/output_reports/.processed_manifest.json
+data/output_reports/
 
 # Logs
 logs/*.log
@@ -33,3 +32,6 @@ logs/*.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/

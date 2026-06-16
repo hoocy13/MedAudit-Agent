@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>病例医学合规批量审核报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #f8f9fc;
+            --color-surface: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text-primary: #1a202c;
+            --color-text-secondary: #4a5568;
+            --color-text-muted: #718096;
+            --color-accent: #2b6cb0;
+            --color-accent-light: #ebf4ff;
+            --color-pass: #059669;
+            --color-pass-bg: #ecfdf5;
+            --color-pass-border: #a7f3d0;
+            --color-warning: #d97706;
+            --color-warning-bg: #fffbeb;
+            --color-warning-border: #fde68a;
+            --color-fail: #dc2626;
+            --color-fail-bg: #fef2f2;
+            --color-fail-border: #fecaca;
+            --color-privacy: #dc2626;
+            --color-privacy-bg: #fef2f2;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            line-height: 1.7;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(43, 108, 176, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 100%, rgba(5, 150, 105, 0.03) 0%, transparent 60%);
+        }
+
+        .report-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* ===== HEADER ===== */
+        .report-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2b6cb0 100%);
+            color: white;
+            padding: 48px 48px 40px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .report-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #059669, #2b6cb0, #d97706);
+        }
+        .header-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 12px;
+        }
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.65;
+            font-weight: 300;
+        }
+
+        /* ===== MAIN BODY ===== */
+        .report-body {
+            background: var(--color-surface);
+            padding: 0 48px 48px;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ===== GLOBAL SUMMARY ===== */
+        .global-summary {
+            display: flex;
+            gap: 12px;
+            padding: 28px 0;
+            border-bottom: 1px solid var(--color-border);
+            flex-wrap: wrap;
+        }
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .stat-chip.pass {
+            background: var(--color-pass-bg);
+            color: var(--color-pass);
+            border: 1px solid var(--color-pass-border);
+        }
+        .stat-chip.warning {
+            background: var(--color-warning-bg);
+            color: var(--color-warning);
+            border: 1px solid var(--color-warning-border);
+        }
+        .stat-chip.fail {
+            background: var(--color-fail-bg);
+            color: var(--color-fail);
+            border: 1px solid var(--color-fail-border);
+        }
+        .stat-chip.total {
+            background: var(--color-accent-light);
+            color: var(--color-accent);
+            border: 1px solid #bee3f8;
+        }
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .stat-chip.pass .stat-dot { background: var(--color-pass); }
+        .stat-chip.warning .stat-dot { background: var(--color-warning); }
+        .stat-chip.fail .stat-dot { background: var(--color-fail); }
+        .stat-chip.total .stat-dot { background: var(--color-accent); }
+
+        /* ===== CASE DIVIDER ===== */
+        .case-section {
+            padding-top: 36px;
+            margin-top: 36px;
+            border-top: 2px solid var(--color-border);
+        }
+        .case-section:first-of-type {
+            margin-top: 0;
+            padding-top: 28px;
+            border-top: none;
+        }
+        .case-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .case-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--color-accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .case-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        /* ===== PATIENT INFO ===== */
+        .patient-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .info-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+        }
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+        .info-value.drug {
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+        .info-value.indication {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--color-accent-light);
+            color: var(--color-accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        /* ===== PRIVACY ALERT ===== */
+        .privacy-alert {
+            margin-top: 24px;
+            padding: 16px 20px;
+            background: var(--color-privacy-bg);
+            border: 1px solid var(--color-fail-border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .privacy-alert .alert-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .privacy-alert .alert-content {
+            font-size: 13px;
+            color: var(--color-privacy);
+            line-height: 1.6;
+        }
+        .privacy-alert .alert-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        /* ===== CASE SUMMARY ===== */
+        .case-summary {
+            display: flex;
+            gap: 12px;
+            padding: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        /* ===== AUDIT TABLE ===== */
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            padding: 20px 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--color-accent);
+            border-radius: 2px;
+        }
+        .subsection-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            padding: 16px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .qc-table {
+            border: 2px solid #dbeafe;
+            background: #f0f7ff;
+        }
+        .qc-table thead th {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .audit-table thead th {
+            background: #f7fafc;
+            color: var(--color-text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 2px solid var(--color-border);
+        }
+        .audit-table tbody tr {
+            transition: background 0.15s ease;
+        }
+        .audit-table tbody tr:hover {
+            background: #f7fafc;
+        }
+        .audit-table tbody tr:not(:last-child) td {
+            border-bottom: 1px solid var(--color-border);
+        }
+        .audit-table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            vertical-align: top;
+            word-break: break-word;
+            line-height: 1.7;
+        }
+        .audit-table td:first-child {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            white-space: nowrap;
+            width: 10%;
+        }
+        .audit-table td:nth-child(2) {
+            width: 8%;
+            text-align: center;
+        }
+        .audit-table td:nth-child(3) {
+            color: var(--color-text-secondary);
+            width: 42%;
+        }
+        .audit-table td:nth-child(4) {
+            color: var(--color-text-secondary);
+            width: 40%;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .status-Pass {
+            background: var(--color-pass-bg);
+            color: var(--color-pass);
+            border: 1px solid var(--color-pass-border);
+        }
+        .status-Pass::before { background: var(--color-pass); }
+        .status-Warning {
+            background: var(--color-warning-bg);
+            color: var(--color-warning);
+            border: 1px solid var(--color-warning-border);
+        }
+        .status-Warning::before { background: var(--color-warning); }
+        .status-Fail {
+            background: var(--color-fail-bg);
+            color: var(--color-fail);
+            border: 1px solid var(--color-fail-border);
+        }
+        .status-Fail::before { background: var(--color-fail); }
+
+        /* ===== FOOTER ===== */
+        .report-footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+        .footer-logo {
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body { padding: 16px; }
+            .report-header { padding: 32px 24px; }
+            .report-body { padding: 0 24px 32px; }
+            .header-title { font-size: 22px; }
+            .patient-section { grid-template-columns: 1fr; gap: 16px; }
+            .global-summary { flex-wrap: wrap; }
+            .case-summary { flex-wrap: wrap; }
+            .audit-table td, .audit-table th { padding: 12px 14px; }
+            .audit-table td:first-child { white-space: normal; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            body { background: white; padding: 0; }
+            .report-wrapper { max-width: 100%; }
+            .report-header { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-body { box-shadow: none; }
+            .audit-table tbody tr:hover { background: transparent; }
+            .case-section { page-break-inside: avoid; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="no-print" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <button onclick="window.print()" style="
+        background: linear-gradient(135deg, #1e3a5f 0%, #2b6cb0 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(43, 108, 176,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(43, 108, 176,0.3)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V2h12v7"></path>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        导出PDF
+    </button>
+</div>
+<div class="report-wrapper">
+
+    <!-- Header -->
+    <header class="report-header">
+        <div class="header-label">Medical Compliance Audit</div>
+        <h1 class="header-title">病例医学合规批量审核报告</h1>
+        <p class="header-subtitle">由 MedAudit Agent 自动生成 · 共 {{ cases|length }} 个病例 · 基于药品规则库的多维度合规审查</p>
+    </header>
+
+    <!-- Body -->
+    <main class="report-body">
+
+        <!-- Global Summary -->
+        <div class="global-summary">
+            {% set total_pass = cases|map(attribute='pass_count')|sum %}
+            {% set total_warn = cases|map(attribute='warning_count')|sum %}
+            {% set total_fail = cases|map(attribute='fail_count')|sum %}
+            <div class="stat-chip total"><span class="stat-dot"></span>病例 {{ cases|length }}</div>
+            <div class="stat-chip pass"><span class="stat-dot"></span>Pass {{ total_pass }}</div>
+            <div class="stat-chip warning"><span class="stat-dot"></span>Warning {{ total_warn }}</div>
+            <div class="stat-chip fail"><span class="stat-dot"></span>Fail {{ total_fail }}</div>
+        </div>
+
+        {% for case in cases %}
+        <section class="case-section">
+            <!-- Case Header -->
+            <div class="case-header">
+                <span class="case-number">{{ loop.index }}</span>
+                <span class="case-title">{{ case.filename }}</span>
+            </div>
+
+            <!-- Patient Info -->
+            <div class="patient-section">
+                <div class="info-block">
+                    <span class="info-label">患者编号</span>
+                    <span class="info-value">{{ case.patient.patient_id }}</span>
+                </div>
+                <div class="info-block">
+                    <span class="info-label">性别 / 年龄</span>
+                    <span class="info-value">{{ case.patient.gender }} / {{ case.patient.age }} 岁</span>
+                </div>
+                <div class="info-block">
+                    <span class="info-label">主要诊断</span>
+                    <span class="info-value">{{ case.patient.diagnosis }}</span>
+                </div>
+                <div class="info-block">
+                    <span class="info-label">治疗药物</span>
+                    <span class="info-value drug">{{ case.patient.treatment_drug }}</span>
+                </div>
+                <div class="info-block">
+                    <span class="info-label">适应症</span>
+                    <span class="info-value indication">{{ case.patient.indication }}</span>
+                </div>
+            </div>
+
+            {% if case.patient.privacy_issues and case.patient.privacy_issues != '无' %}
+            <div class="privacy-alert">
+                <span class="alert-icon">🔒</span>
+                <div class="alert-content">
+                    <div class="alert-title">隐私泄露风险检测</div>
+                    <div>{{ case.patient.privacy_issues }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Case Summary Stats -->
+            <div class="case-summary">
+                <div class="stat-chip pass"><span class="stat-dot"></span>Pass {{ case.pass_count }}</div>
+                <div class="stat-chip warning"><span class="stat-dot"></span>Warning {{ case.warning_count }}</div>
+                <div class="stat-chip fail"><span class="stat-dot"></span>Fail {{ case.fail_count }}</div>
+            </div>
+
+            <!-- Audit Results -->
+            <h2 class="section-title">详细审核意见</h2>
+
+            {% set qc_aspects = ['文本规范性检查', '通用名规范检查', '医学逻辑审核', '单位规范检查'] %}
+            {% set qc_results = case.audit_results|selectattr('aspect', 'in', qc_aspects)|list %}
+            {% set other_results = case.audit_results|rejectattr('aspect', 'in', qc_aspects)|list %}
+
+            {% if qc_results %}
+            <h3 class="subsection-title">🔍 基础质控检查</h3>
+            <table class="audit-table qc-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">检查项目</th>
+                        <th style="width: 8%;">状态</th>
+                        <th style="width: 42%;">检查详情</th>
+                        <th style="width: 40%;">修改建议</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in qc_results %}
+                    <tr>
+                        <td>{{ item.aspect }}</td>
+                        <td><span class="status-badge status-{{ item.status }}">{{ item.status }}</span></td>
+                        <td>{{ item.detail }}</td>
+                        <td>{{ item.suggestion }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            {% if other_results %}
+            <h3 class="subsection-title">📋 合规专项审核</h3>
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">审核维度</th>
+                        <th style="width: 8%;">状态</th>
+                        <th style="width: 42%;">依据详情</th>
+                        <th style="width: 40%;">优化建议</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in other_results %}
+                    <tr>
+                        <td>{{ item.aspect }}</td>
+                        <td><span class="status-badge status-{{ item.status }}">{{ item.status }}</span></td>
+                        <td>{{ item.detail }}</td>
+                        <td>{{ item.suggestion }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </section>
+        {% endfor %}
+
+        <!-- Footer -->
+        <footer class="report-footer">
+            <span class="footer-logo">MedAudit Agent</span>
+            <span>本报告由 AI 自动生成，仅供合规审核参考</span>
+        </footer>
+
+    </main>
+</div>
+</body>
+</html>
